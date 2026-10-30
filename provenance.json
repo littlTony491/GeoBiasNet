@@ -1,0 +1,53 @@
+{
+  "variant": "geobiasnet-original-reshape-v1",
+  "upstream_commit": "52db2828d00f97419c086cd4a0fe5489ba07d291",
+  "upstream_url": "https://github.com/littlTony491/GeoBiasNet",
+  "model_class_ast_sha256": "35811c4e13785b8a47742ecac38c9c780992ce8702eff122d789d547c8072612",
+  "base_definition_ast_sha256": {
+    "HCF": "19ae326723fbc1b822f5d64022e06ed812b0b7ffecf9fec2863ba4d10a30f623",
+    "QuaternionHCF": "6832f600f58236485b3a14e8f43f23e1dfd5decc5e499771648f73909a3e34fa",
+    "GraphConvolution": "f25202a487eec1e4e19011472d3033db123aee2b2adb06ca9914a2221cd38e92",
+    "GCN_encoder": "b4708b4424b7285bc85c83835b77200322e41a2049b3c49f93288ecf437319f0",
+    "Q4GNNLayer": "c248ffd58d5065246719169d34c983ebf1fddccbdbaf0bce42b070dfc97cc82e",
+    "QGC_Block": "f027858f6cbf61f1bb76a3af1a35ca894226272de2f727ee2ef81f0e05db4d8d",
+    "make_quaternion_mul": "c7b3ac0c160c0f7a3f35b9d7ac3a73a8656cf6d190ba70f7c20ea9369bac33e3"
+  },
+  "original_preprocessing_ast_sha256": {
+    "utils/h36motion3d.py": {
+      "Datasets": "f6111f1106cb0f86459a98728b6ff3b988e4d4e12a6956c21145a138ba2bf191"
+    },
+    "utils/data_utils.py": {
+      "readCSVasFloat": "1a7f03c65a6ae1a96d68745e899e32f270f9e6a343ad2347310fd54a1dad0737",
+      "expmap2rotmat_torch": "72b649c6fec83789fdcc717987882871efe6707408be973afaf195b8ea6e239c",
+      "expmap2xyz_torch": "6fb3f3692d13c0038c3d00e3df6be5ac6ec7ee432815abca9fbf3a0fe9d6b98c",
+      "find_indices_n": "01c8f23ea89d4bfd22f801e947251eadcef167e98743dfc03d84fc20eb67767b"
+    },
+    "utils/forward_kinematics.py": {
+      "_some_variables": "f1449afc612a82b7f204805d7266f724aeca4053991612f0c071d51b63bb56d6",
+      "fkl_torch": "98dfbc347bf1aeca4bfe0bf61434c9e5cd8d463822680646d3e75a37b93d4a5b"
+    },
+    "utils/util.py": {
+      "get_dct_matrix": "8c1dc712c5c4828f8f26ebff5458623880a15a6ae98ccea1ed41aa84155421c7"
+    }
+  },
+  "mlp_source": "Reconstructed 4D XYZ/time MLP from the previous local cleanup; original 4D file not present in upstream or archive.",
+  "mlp_sha256": "0106678b985dcde80e83187d15ea99eba4ffebcf1a29558e65743c147ed0f812",
+  "training_reference": "BARNet_archive_20261030/experiments/ablations/raw/V2/v2_long_co_h36m.py:run_model",
+  "training_reference_caveat": "The release references main_h36m_ddp_long.py but does not include it. Training is adapted from archived five-output supervision; not a byte-for-byte recovery of the missing DDP entrypoint.",
+  "test_reference": "GeoBiasNet/main_h36m_test.py:run_model",
+  "retained": [
+    "full history+future passed into forward",
+    "gt.reshape(B,3,N,-1)",
+    "DCT-domain residual minus reshaped time-domain GT",
+    "unclamped scalar fusion normalization",
+    "unused GraphConvolution bias",
+    "five-output full-sequence supervision",
+    "32-joint metric and action-mean testing",
+    "legacy validation split 2 (S5) by default"
+  ],
+  "training_reference_function_ast_sha256": "495aaac84ffe6193ff5fb577716ca2d0dd53e786a22a907c03adf80aa1a3f2b2",
+  "test_reference_function_ast_sha256": "bfd6f77fc751dbca42018367534aa69cbb3a93e03641d95cd33e05ac1d433f39",
+  "mlp_normalized_source_sha256": "0106678b985dcde80e83187d15ea99eba4ffebcf1a29558e65743c147ed0f812",
+  "mlp_hash_convention": "UTF-8 source with LF line endings; independent of checkout platform",
+  "ast_hash_runtime": "Python 3.10"
+}

@@ -1,14 +1,10 @@
+"""Original released GeoBiasNet. The full-sequence GT reshape is intentional."""
+
 from torch.nn import Module
 from torch import nn
 import torch
-import math
 import utils.util as util
-from utils.encode import sine_cosine_transform_encoding
 from siMLPe import mlp_4d
-import numpy as np
-from torch.nn.parameter import Parameter
-from utils.opt import Options
-import sys
 from model import BaseModel as BaseBlock
 
 class MultiStageModel_4(Module):
@@ -253,11 +249,3 @@ class MultiStageModel_4(Module):
         output_1 = self.conv70_35(output_1.reshape(bs, dct_n * 2, self.node_n, -1)).reshape(bs, dct_n, -1)
 
         return output_fin, output_4, output_3, output_2, output_1
-
-if __name__ == '__main__':
-    option = Options().parse()
-    option.d_model = 64
-    model = MultiStageModel_4(opt=option).cuda()
-    print(">>> total params: {:.2f}M".format(sum(p.numel() for p in model.parameters()) / 1000000.0))
-    src = torch.randn(32, 35, 66).cuda()
-    outputs = model(src)

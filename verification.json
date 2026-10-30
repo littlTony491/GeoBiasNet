@@ -1,0 +1,76 @@
+{
+  "archived_training_step": {
+    "model_state_max_difference": 0.0,
+    "metrics_exact_match": true,
+    "batch_sizes": [
+      2,
+      3,
+      1
+    ],
+    "singleton_training_tail_skipped": true,
+    "status": "PASS"
+  },
+  "published_test_step": {
+    "per_frame_mpjpe_max_difference": 0.0,
+    "batch_sizes": [
+      2,
+      3,
+      1
+    ],
+    "status": "PASS"
+  },
+  "published_checkpoint": {
+    "strict_load": "PASS",
+    "output_shape": [
+      2,
+      60,
+      66
+    ]
+  },
+  "intentional_reshape_leak": {
+    "future_perturbation_max_output_change": 2537.895263671875,
+    "future_input_gradient_absolute_sum": 14318.658203125,
+    "bug_preserved": true
+  },
+  "verified_at": "2026-10-30T20:49:02+08:00",
+  "regression_tests": {
+    "count": 16,
+    "status": "PASS"
+  },
+  "gpu_forward_backward": {
+    "horizons": [
+      25,
+      50
+    ],
+    "d_model": 16,
+    "batch_size": 2,
+    "device": "NVIDIA GeForce RTX 5070 Ti",
+    "status": "PASS"
+  },
+  "real_data_smoke": {
+    "action": "walking",
+    "device": "cpu",
+    "batches_per_phase": 1,
+    "completed_epochs_including_resume": 2,
+    "checkpoint_load": "PASS",
+    "test_samples": 2,
+    "test_mpjpe_32j": 382.20912780761716,
+    "note": "Short functionality check; not a converged experiment."
+  },
+  "scope": "Original released forward retained; training entry adapted from archived five-output code; missing original 4D MLP source reconstructed.",
+  "data_download": {
+    "source": "https://drive.google.com/uc?id=1FbBXEQlLgD7Me6JFm_2MJbGf9T72d3u_",
+    "archive_bytes": 229252930,
+    "archive_sha256": "77fb27d6de110623cfb71727eeffaac7e2dc160199cf60e3da558b66921c0c59",
+    "subjects": 7,
+    "actions": 15,
+    "files": 210,
+    "columns": 99,
+    "reader_sample_shape": [
+      60,
+      96
+    ],
+    "matches_existing_data_sample": true,
+    "repeated_run_skips_download": true
+  }
+}

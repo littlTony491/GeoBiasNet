@@ -1,15 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import print_function
+"""Only the released final model's active layers, without numerical fixes."""
 
-import torch.nn as nn
-import torch
-from torch.nn.parameter import Parameter
 import math
-import sys
-import numpy as np
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.parameter import Parameter
 
 class HCF(nn.Module):
     def __init__(self, in_features, out_features):
@@ -108,24 +103,6 @@ class HCF(nn.Module):
         output = output.contiguous().view(bs, node_n, out_c, self.out_features)
         
         return output
-
-def make_quaternion_mul_hcf(x, quat_dim):
-    """
-    为HCF构造四元数乘法变换
-    x: [batch, in_features]，其中in_features = 4 * quat_dim
-    返回: [batch, in_features] 经过Hamilton积变换
-    """
-    # 将输入分成4个四元数分量
-    dim = quat_dim
-    
-    # 分割成4个部分 r, i, j, k
-    r, i, j, k = torch.split(x, [dim, dim, dim, dim], dim=1)
-    
-    # 构造Hamilton乘积（简化版本，直接组合）
-    # 这里采用标准四元数表示
-    hamilton = torch.cat([r, i, j, k], dim=1)
-    
-    return hamilton
 
 class QuaternionHCF(nn.Module):
     """
@@ -314,45 +291,6 @@ class GraphConvolution(nn.Module):
     def __repr__(self):
         return f'{self.__class__.__name__} ({self.in_features} -> {self.out_features})'
 
-class GC_Block(nn.Module):
-    """
-    图卷积残差块
-    包含两个图卷积层，带有批归一化、激活函数和Dropout
-    输入输出形状: [batch_size, channels, num_nodes, seq_len]
-    """
-    def __init__(self, channal, p_dropout, bias=True, node_n=22, node_n_s2=10, node_n_s3=5, seq_len=20):
-        super(GC_Block, self).__init__()
-        self.in_features = channal
-        self.out_features = channal
-        
-        # 图卷积层
-        self.gc1 = GraphConvolution(channal, channal, node_n=node_n, seq_len=seq_len, bias=bias)
-        
-        # 批归一化层
-        self.bn1 = nn.BatchNorm1d(channal * node_n * seq_len)
-        
-        # 激活函数和Dropout
-        self.do = nn.Dropout(p_dropout)
-        self.act_f = nn.Tanh()
-
-    def forward(self, x):
-        """前向传播，包含残差连接"""
-        y = self.gc1(x)
-        b, c, n, l = y.shape
-        
-        y = y.reshape(b, -1).contiguous()
-        y = self.bn1(y).view(b, c, n, l).contiguous()
-        
-        # 激活函数和Dropout
-        y = self.act_f(y)
-        y = self.do(y)
-        
-        # 残差连接
-        return y + x
-
-    def __repr__(self):
-        return f'{self.__class__.__name__} ({self.in_features} -> {self.out_features})'
-
 class GCN_encoder(nn.Module):
     """
     GCN编码器
@@ -426,46 +364,7 @@ class GCN_encoder(nn.Module):
         y = self.q4gnn2(y)
         
         # 残差连接
-        return y + self.reshape_conv(x) # [bs, out_channels, self.node_n, dct_n]
-    
-class GCN_decoder(nn.Module):
-    def __init__(self, in_channal, out_channal,
-                 n_txcnn_layers,txc_kernel_size,txc_dropout,
-                 node_n=22,  node_n_s2=10, node_n_s3=5,seq_len=20, p_dropout=0.3, num_stage=1,snum_stage=2,):
-        """
-        GCN解码器
-        输入形状: [batch_size, in_channels, num_nodes, seq_len] == [bs, in_channal, self.node_n, dct_n]
-        输出形状: [batch_size, 3, num_nodes, seq_len]
-        """
-        super(GCN_decoder, self).__init__()
-        self.num_stage = num_stage
-        self.input_time_frame = seq_len
-        self.output_time_frame = seq_len
-        self.n_txcnn_layers = n_txcnn_layers
-        self.txcnns = nn.ModuleList()
-        self.conv16_3 = torch.nn.Conv2d(in_channels=in_channal, out_channels=3, kernel_size=(1, 1))
-        # ----------------------------------
-        # self.q4gnn1 = Q4GNNLayer(in_features=in_channal, out_features=in_channal,  node_n=node_n,seq_len=seq_len, dropout=p_dropout)
-        # ----------------------------------
-
-        self.txcnns.append(CNN_layer(seq_len, seq_len, txc_kernel_size,
-                                     txc_dropout))  # with kernel_size[3,3] the dimensinons of C,V will be maintained
-        for i in range(1, n_txcnn_layers):
-            self.txcnns.append(CNN_layer(seq_len, seq_len, txc_kernel_size, txc_dropout))
-
-        self.prelus = nn.ModuleList()
-        for j in range(n_txcnn_layers):
-            self.prelus.append(nn.PReLU())
-
-    def forward(self, x):
-        # x : [bs, in_channels, self.node_n, dct_n]
-        x = x.permute(0, 3, 1, 2)  # [bs, dct_n, in_channels, self.node_n]
-
-        for i in range(1, self.n_txcnn_layers):
-            x = self.prelus[i](self.txcnns[i](x)) + x  # 残差连接
-        x = x.permute(0, 2, 3, 1) # [bs, in_channels, self.node_n, dct_n]
-        x = self.conv16_3(x) # [bs, in_channels, self.node_n, dct_n]
-        return x
+        return y + self.reshape_conv(x)
 
 class Q4GNNLayer(torch.nn.Module):
     """
@@ -564,7 +463,6 @@ class QGC_Block(nn.Module):
         
         return y + x
 
-# 辅助函数
 def make_quaternion_mul(kernel):
     """构造四元数乘法矩阵"""
     dim = kernel.size(1) // 4
@@ -575,56 +473,3 @@ def make_quaternion_mul(kernel):
     k2 = torch.cat([k, -j, i, r], dim=0)
     hamilton = torch.cat([r2, i2, j2, k2], dim=1)
     return hamilton
-
-class CNN_layer(nn.Module):
-    """
-    简单的CNN层，保持输入维度不变（特征维度除外）
-    用于时间维度的处理
-    """
-    def __init__(self, in_channels, out_channels, kernel_size, dropout, bias=True):
-        super(CNN_layer, self).__init__()
-        self.kernel_size = kernel_size
-        padding = ((kernel_size[0] - 1) // 2, (kernel_size[1] - 1) // 2)
-        
-        self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding),
-            nn.BatchNorm2d(out_channels),
-            nn.Dropout(dropout, inplace=True)
-        )
-
-    def forward(self, x):
-        return self.block(x)
-    
-class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, dropout=0.1, max_len=5000):
-        super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
-
-        pe = torch.zeros(max_len, d_model)
-        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
-        self.register_buffer('pe', pe)
-
-    def forward(self, x):
-        x = x + self.pe[:x.size(0), :]
-        return self.dropout(x)
-
-if __name__ == "__main__":
-    # 测试编码器
-    test_encoder = GCN_encoder(
-        in_channal=3, 
-        out_channal=64,
-        node_n=22,
-        seq_len=35,
-        p_dropout=0.3,
-        num_stage=1,
-        snum_stage=2
-    )
-    
-    x = torch.randn((10, 3, 22, 35))
-    output = test_encoder(x)
-    print(f"Encoder input shape: {x.shape}")
-    print(f"Encoder output shape: {output.shape}")
